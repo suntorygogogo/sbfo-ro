@@ -378,10 +378,18 @@ onMounted(() => {
 
 const divisionOptions    = computed(() => lookupStore.getCached("division"));
 const countryOptions     = computed(() => lookupStore.getCached("country"));
-const channelOptions     = computed(() => lookupStore.getCached("channel"));
+const channelOptions     = computed(() =>
+  formData.value.division
+    ? lookupStore.getCached("channel", formData.value.division)
+    : lookupStore.getCached("channel")
+);
 const probabilityOptions = computed(() => lookupStore.getCached("probability"));
 const categOptions       = computed(() => lookupStore.getCached("categorisation"));
-const brandOptions        = computed(() => lookupStore.getCached("brand"));
+const brandOptions        = computed(() =>
+  formData.value.division
+    ? lookupStore.getCached("brand", formData.value.division)
+    : lookupStore.getCached("brand")
+);
 const brandFamilyOptions  = computed(() =>
   formData.value.brand
     ? lookupStore.getCached("brand_family", formData.value.brand)
@@ -492,6 +500,20 @@ const accountOptions = computed(() =>
     : lookupStore.getCached("account")
 );
 
+watch(() => formData.value.division, (val) => {
+  if (!isLoadingEntry.value) {
+    formData.value.channel = "";
+    formData.value.subChannel = "";
+    formData.value.account = "";
+    formData.value.brand = "";
+    formData.value.brandFamily = "";
+  }
+  if (val) {
+    lookupStore.loadChildren("channel", val);
+    lookupStore.loadChildren("brand", val);
+  }
+});
+
 watch(() => formData.value.channel, (val) => {
   if (!isLoadingEntry.value) {
     formData.value.subChannel = "";
@@ -564,6 +586,10 @@ watch(
           };
         }),
       };
+      if (entry.division) {
+        lookupStore.loadChildren("channel", entry.division);
+        lookupStore.loadChildren("brand", entry.division);
+      }
       if (entry.channel) lookupStore.loadChildren("sub_channel", entry.channel);
       if (entry.subChannel) lookupStore.loadChildren("account", entry.subChannel);
       if (entry.brand) lookupStore.loadChildren("brand_family", entry.brand);
